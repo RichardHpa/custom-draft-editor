@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import { Editor, EditorState, RichUtils } from 'draft-js';
+import { EditorState, RichUtils } from 'draft-js';
+import Editor from "draft-js-plugins-editor";
 import './CustomDraft.scss';
+import addLinkPlugin from './plugins/addLinkPlugin'
 
 class CustomDraft extends Component {
     constructor(props){
@@ -8,6 +10,10 @@ class CustomDraft extends Component {
         this.state = {
             editorState: EditorState.createEmpty()
         };
+
+        this.plugins = [
+           addLinkPlugin,
+         ];
 
         this.onChange = this.onChange.bind(this);
         this.onToggleBlockType = this.onToggleBlockType.bind(this);
@@ -28,22 +34,46 @@ class CustomDraft extends Component {
         this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, inlineStyle));
     }
 
+    onAddLink = () => {
+      const editorState = this.state.editorState;
+      const selection = editorState.getSelection();
+      const link = window.prompt("Paste the link -");
+      if (!link) {
+        this.onChange(RichUtils.toggleLink(editorState, selection, null));
+        return "handled";
+      }
+      const content = editorState.getCurrentContent();
+      const contentWithEntity = content.createEntity("LINK", "MUTABLE", {
+        url: link
+      });
+      const newEditorState = EditorState.push(
+        editorState,
+        contentWithEntity,
+        "create-entity"
+      );
+      const entityKey = contentWithEntity.getLastCreatedEntityKey();
+      this.onChange(RichUtils.toggleLink(newEditorState, selection, entityKey));
+      return "handled";
+    };
+
     render(){
         const { editorState } = this.state;
         return(
             <div>
-            <EditorControls
-            editorState={editorState}
-            onToggleBlockTyoe={this.onToggleBlockType}
-            onToggleInline={this.onToggleInlineStyle}
-            />
-            <Editor
-            editorState={editorState}
-            placeholder="Enter some text here."
-            ref="editor"
-            spellCheck={true}
-            onChange={this.onChange}
-            />
+                <EditorControls
+                    editorState={editorState}
+                    onToggleBlockTyoe={this.onToggleBlockType}
+                    onToggleInline={this.onToggleInlineStyle}
+                    AddLink={this.onAddLink}
+                />
+                <Editor
+                    editorState={editorState}
+                    placeholder="Enter some text here."
+                    ref="editor"
+                    spellCheck={true}
+                    plugins={this.plugins}
+                    onChange={this.onChange}
+                />
             </div>
         )
     }
@@ -69,45 +99,11 @@ class EditorButton extends React.Component {
         }
         return(
             <span className={className} onMouseDown={this.onToggle}>
-            {this.props.label}
+                {this.props.label}
             </span>
         )
     }
 }
-
-
-const EditorControls = (props) => {
-    const {editorState} = props;
-    let currentStyle = props.editorState.getCurrentInlineStyle();
-    const selection = editorState.getSelection();
-    const blockType = editorState.getCurrentContent().getBlockForKey(selection.getStartKey()).getType();
-    return (
-        <div className="editorControls">
-            <div className="editorControlRow">
-                {BLOCK_TYPES.map(
-                    (type) => <EditorButton
-                    key={type.label}
-                    active={type.style === blockType}
-                    label={type.label}
-                    onToggle={props.onToggleBlockTyoe}
-                    style={type.style}
-                    />
-                )}
-            </div>
-            <div className="editorControlRow">
-            {INLINE_STYLES.map(
-                type => <EditorButton
-                key={type.label}
-                active={currentStyle.has(type.style)}
-                label={type.label}
-                onToggle={props.onToggleInline}
-                style={type.style}
-                />
-            )}
-            </div>
-        </div>
-    );
-};
 
 const BLOCK_TYPES = [
     {
@@ -159,3 +155,52 @@ const INLINE_STYLES = [
         style: 'CODE'
     }
 ];
+
+const MEDIA_BUTTONS = [
+    {
+        label: 'Anchor',
+        style: 'ANCHOR'
+    }
+];
+
+const EditorControls = (props) => {
+    const {editorState} = props;
+    let currentStyle = props.editorState.getCurrentInlineStyle();
+    const selection = editorState.getSelection();
+    const blockType = editorState.getCurrentContent().getBlockForKey(selection.getStartKey()).getType();
+    return (
+        <div className="editorControls">
+            <div className="editorControlRow">
+                {BLOCK_TYPES.map(
+                    (type) => <EditorButton
+                    key={type.label}
+                    active={type.style === blockType}
+                    label={type.label}
+                    onToggle={props.onToggleBlockTyoe}
+                    style={type.style}
+                    />
+                )}
+            </div>
+            <div className="editorControlRow">
+                {INLINE_STYLES.map(
+                    type => <EditorButton
+                    key={type.label}
+                    active={currentStyle.has(type.style)}
+                    label={type.label}
+                    onToggle={props.onToggleInline}
+                    style={type.style}
+                    />
+                )}
+            </div>
+            <div className="editorControlRow">
+                {MEDIA_BUTTONS.map(
+                    type => <EditorButton
+                    key={type.label}
+                    label={type.label}
+                    onToggle={props.AddLink}
+                    />
+                )}
+            </div>
+        </div>
+    );
+};
