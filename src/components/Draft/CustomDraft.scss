@@ -1,0 +1,48 @@
+.DraftEditor-root{
+    background: #fff;
+    border: 1px solid #ddd;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    padding: 20px;
+    width: 600px;
+    min-height: 300px;
+    color: #282c34;
+    text-align: left;
+    margin: 0 auto;
+    margin-top: 10px;
+}
+
+.DraftEditor-editorContainer{
+    background-color: hsla(0,0,100%,0);
+    border-left: .1px solid transparent;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.public-DraftEditorPlaceholder-inner{
+    color: #9197a3;
+    position: absolute;
+    z-index: 1;
+}
+
+.editorControlRow{
+    .editorButton{
+        color: #999;
+        cursor: pointer;
+        padding: 0px 16px;
+        display: inline-block;
+        border-right: 1px solid #ddd;
+        &:last-child{
+            border-right: none;
+        }
+        &:hover{
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        &.editorButtonActive{
+            color: #5890ff;
+        }
+
+    }
+}
