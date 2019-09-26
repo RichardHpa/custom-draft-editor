@@ -8,16 +8,19 @@ class CustomDraft extends Component {
     constructor(props){
         super(props);
         this.state = {
-            editorState: EditorState.createEmpty()
+            editorState: EditorState.createEmpty(),
+            editorID: props.editorID
         };
 
         this.plugins = [
-           addLinkPlugin,
-         ];
+            addLinkPlugin,
+        ];
 
         this.onChange = this.onChange.bind(this);
         this.onToggleBlockType = this.onToggleBlockType.bind(this);
         this.onToggleInlineStyle = this.onToggleInlineStyle.bind(this);
+
+        this.onOpenLink = this.onOpenLink.bind(this);
     }
 
     onChange(editorState){
@@ -34,38 +37,54 @@ class CustomDraft extends Component {
         this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, inlineStyle));
     }
 
-    onAddLink = () => {
-      const editorState = this.state.editorState;
-      const selection = editorState.getSelection();
-      const link = window.prompt("Paste the link -");
-      if (!link) {
-        this.onChange(RichUtils.toggleLink(editorState, selection, null));
+    onAddLink = (here) => {
+        const element = document.getElementById(`editorContainer-${this.state.editorID}`);
+        const editor = element.getElementsByClassName( 'DraftEditor-root' )[0]
+        console.log(element);
+        console.log(editor);
+        var newDiv = document.createElement("div");
+        var newContent = document.createTextNode("Hi there and greetings!");
+        newDiv.appendChild(newContent);
+        element.appendChild(newDiv);
+
+
+        const editorState = this.state.editorState;
+        const selection = editorState.getSelection();
+        const link = window.prompt("Paste the link -");
+        if (!link) {
+            this.onChange(RichUtils.toggleLink(editorState, selection, null));
+            return "handled";
+        }
+        const content = editorState.getCurrentContent();
+        const contentWithEntity = content.createEntity("LINK", "MUTABLE", {
+            url: link
+        });
+        const newEditorState = EditorState.push(
+            editorState,
+            contentWithEntity,
+            "create-entity"
+        );
+        const entityKey = contentWithEntity.getLastCreatedEntityKey();
+        this.onChange(RichUtils.toggleLink(newEditorState, selection, entityKey));
         return "handled";
-      }
-      const content = editorState.getCurrentContent();
-      const contentWithEntity = content.createEntity("LINK", "MUTABLE", {
-        url: link
-      });
-      const newEditorState = EditorState.push(
-        editorState,
-        contentWithEntity,
-        "create-entity"
-      );
-      const entityKey = contentWithEntity.getLastCreatedEntityKey();
-      this.onChange(RichUtils.toggleLink(newEditorState, selection, entityKey));
-      return "handled";
     };
 
+    onOpenLink(){
+
+    }
+
     render(){
-        const { editorState } = this.state;
+        const { editorState, editorID } = this.state;
         return(
-            <div>
+            <div id={`editorContainer-${editorID}`} className="editorContainer">
                 <EditorControls
                     editorState={editorState}
                     onToggleBlockTyoe={this.onToggleBlockType}
                     onToggleInline={this.onToggleInlineStyle}
-                    AddLink={this.onAddLink}
+                    // AddLink={this.onAddLink}
+                    AddLink={this.onOpenLink}
                 />
+                <LinkEditor/>
                 <Editor
                     editorState={editorState}
                     placeholder="Enter some text here."
@@ -99,7 +118,7 @@ class EditorButton extends React.Component {
         }
         return(
             <span className={className} onMouseDown={this.onToggle}>
-                {this.props.label}
+            {this.props.label}
             </span>
         )
     }
@@ -170,37 +189,56 @@ const EditorControls = (props) => {
     const blockType = editorState.getCurrentContent().getBlockForKey(selection.getStartKey()).getType();
     return (
         <div className="editorControls">
-            <div className="editorControlRow">
-                {BLOCK_TYPES.map(
-                    (type) => <EditorButton
-                    key={type.label}
-                    active={type.style === blockType}
-                    label={type.label}
-                    onToggle={props.onToggleBlockTyoe}
-                    style={type.style}
-                    />
-                )}
-            </div>
-            <div className="editorControlRow">
-                {INLINE_STYLES.map(
-                    type => <EditorButton
-                    key={type.label}
-                    active={currentStyle.has(type.style)}
-                    label={type.label}
-                    onToggle={props.onToggleInline}
-                    style={type.style}
-                    />
-                )}
-            </div>
-            <div className="editorControlRow">
-                {MEDIA_BUTTONS.map(
-                    type => <EditorButton
-                    key={type.label}
-                    label={type.label}
-                    onToggle={props.AddLink}
-                    />
-                )}
-            </div>
+        <div className="editorControlRow">
+        {BLOCK_TYPES.map(
+            (type) => <EditorButton
+            key={type.label}
+            active={type.style === blockType}
+            label={type.label}
+            onToggle={props.onToggleBlockTyoe}
+            style={type.style}
+            />
+        )}
+        </div>
+        <div className="editorControlRow">
+        {INLINE_STYLES.map(
+            type => <EditorButton
+            key={type.label}
+            active={currentStyle.has(type.style)}
+            label={type.label}
+            onToggle={props.onToggleInline}
+            style={type.style}
+            />
+        )}
+        </div>
+        <div className="editorControlRow">
+        {MEDIA_BUTTONS.map(
+            type => <EditorButton
+            key={type.label}
+            label={type.label}
+            onToggle={props.AddLink}
+            />
+        )}
+        </div>
         </div>
     );
 };
+
+
+class LinkEditor extends React.Component {
+    constructor(props){
+        super(props);
+        this.state = {
+        };
+    }
+
+    render(){
+        return(
+            <div className="anchorContainer">
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam egestas metus id elit scelerisque, eget rutrum urna convallis. In et accumsan metus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tempus ipsum quis dui scelerisque consectetur. Donec non ipsum ante. Phasellus id euismod libero. Ut quam tellus, consectetur id condimentum vel, pharetra quis quam. In hac habitasse platea dictumst.
+
+</p>
+            </div>
+        )
+    }
+}
