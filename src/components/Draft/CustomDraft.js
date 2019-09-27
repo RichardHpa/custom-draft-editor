@@ -68,7 +68,8 @@ class CustomDraft extends Component {
             const entityKey = contentWithEntity.getLastCreatedEntityKey();
             this.onChange(RichUtils.toggleLink(newEditorState, selection, entityKey));
             this.setState({
-                anchorInput: false
+                anchorInput: false,
+                selection: null,
             })
             return "handled";
         }
